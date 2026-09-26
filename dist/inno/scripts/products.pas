@@ -178,9 +178,8 @@ var
 	s: string;
 begin
 	// Stop the running service and apps so their files can be replaced on upgrade
-	Exec(ExpandConstant('{sys}
-et.exe'), 'stop InputLeap', '', SW_HIDE, ewWaitUntilTerminated, i);
-	Exec(ExpandConstant('{sys}	askkill.exe'), '/f /t /im input-leap.exe /im input-leaps.exe /im input-leapc.exe /im input-leapd.exe', '', SW_HIDE, ewWaitUntilTerminated, i);
+	Exec(ExpandConstant('{sys}\net.exe'), 'stop InputLeap', '', SW_HIDE, ewWaitUntilTerminated, i);
+	Exec(ExpandConstant('{sys}\taskkill.exe'), '/f /t /im input-leap.exe /im input-leaps.exe /im input-leapc.exe /im input-leapd.exe', '', SW_HIDE, ewWaitUntilTerminated, i);
 	Sleep(1000);
 
 	delayedReboot := false;
