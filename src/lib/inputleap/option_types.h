@@ -67,6 +67,8 @@ static const OptionID    kOptionXTestXineramaUnaware        = OPTION_CODE("XTXU"
 static const OptionID    kOptionScreenPreserveFocus        = OPTION_CODE("SFOC");
 static const OptionID    kOptionRelativeMouseMoves        = OPTION_CODE("MDLT");
 static const OptionID    kOptionWin32KeepForeground        = OPTION_CODE("_KFW");
+//! Inputgate: keep the cursor on the server while a game has captured it
+static const OptionID    kOptionGameMode                   = OPTION_CODE("GAME");
 static const OptionID    kOptionClipboardSharing            = OPTION_CODE("CLPS");
 static const OptionID    kOptionClipboardSharingSize        = OPTION_CODE("CLSZ");
 //@}

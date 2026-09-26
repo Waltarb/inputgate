@@ -50,6 +50,7 @@ class ServerConfig : public BaseConfig
         bool relativeMouseMoves() const { return m_RelativeMouseMoves; }
         bool screenSaverSync() const { return m_ScreenSaverSync; }
         bool win32KeepForeground() const { return m_Win32KeepForeground; }
+        bool gameMode() const { return m_GameMode; }
         bool hasSwitchDelay() const { return m_HasSwitchDelay; }
         int switchDelay() const { return m_SwitchDelay; }
         bool hasSwitchDoubleTap() const { return m_HasSwitchDoubleTap; }
@@ -83,6 +84,7 @@ class ServerConfig : public BaseConfig
         void setRelativeMouseMoves(bool on) { m_RelativeMouseMoves = on; }
         void setScreenSaverSync(bool on) { m_ScreenSaverSync = on; }
         void setWin32KeepForeground(bool on) { m_Win32KeepForeground = on; }
+        void setGameMode(bool on) { m_GameMode = on; }
         void haveSwitchDelay(bool on) { m_HasSwitchDelay = on; }
         void setSwitchDelay(int val) { m_SwitchDelay = val; }
         void haveSwitchDoubleTap(bool on) { m_HasSwitchDoubleTap = on; }
@@ -115,6 +117,7 @@ class ServerConfig : public BaseConfig
         bool m_RelativeMouseMoves;
         bool m_ScreenSaverSync;
         bool m_Win32KeepForeground;
+        bool m_GameMode = true;
         bool m_HasSwitchDelay;
         int m_SwitchDelay;
         bool m_HasSwitchDoubleTap;

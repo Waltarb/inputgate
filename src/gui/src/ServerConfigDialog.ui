@@ -466,6 +466,16 @@ Double click on a screen to edit its settings.</string>
             </layout>
            </widget>
           </item>
+          <item row="8" column="0">
+           <widget class="QCheckBox" name="m_pCheckBoxGameMode">
+            <property name="toolTip">
+             <string>While a game has captured the mouse (fullscreen, or the cursor is locked to its window), the mouse stays on this computer.</string>
+            </property>
+            <property name="text">
+             <string>&amp;Game mode: keep the mouse here while a game has it</string>
+            </property>
+           </widget>
+          </item>
           <item row="3" column="0">
            <widget class="QCheckBox" name="m_pCheckBoxWin32KeepForeground">
             <property name="enabled">

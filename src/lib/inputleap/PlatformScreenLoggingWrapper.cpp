@@ -235,6 +235,11 @@ std::int32_t PlatformScreenLoggingWrapper::getJumpZoneSize() const
     return result;
 }
 
+bool PlatformScreenLoggingWrapper::isGameCapturingInput() const
+{
+    return screen_->isGameCapturingInput();
+}
+
 bool PlatformScreenLoggingWrapper::isAnyMouseButtonDown(std::uint32_t& button_id) const
 {
     auto result = screen_->isAnyMouseButtonDown(button_id);

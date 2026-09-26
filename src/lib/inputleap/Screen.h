@@ -340,6 +340,10 @@ private:
 
     bool m_mock;
     bool m_enableDragDrop;
+
+    // keep the cursor here while a game has captured it
+    bool m_gameMode = true;
+    mutable bool m_gameLocked = false;
 };
 
 }

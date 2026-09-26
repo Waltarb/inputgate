@@ -112,6 +112,7 @@ void ServerConfig::saveSettings()
     settings().setValue("relativeMouseMoves", relativeMouseMoves());
     settings().setValue("screenSaverSync", screenSaverSync());
     settings().setValue("win32KeepForeground", win32KeepForeground());
+    settings().setValue("gameMode", gameMode());
     settings().setValue("hasSwitchDelay", hasSwitchDelay());
     settings().setValue("switchDelay", switchDelay());
     settings().setValue("hasSwitchDoubleTap", hasSwitchDoubleTap());
@@ -158,6 +159,7 @@ void ServerConfig::loadSettings()
     setRelativeMouseMoves(settings().value("relativeMouseMoves", false).toBool());
     setScreenSaverSync(settings().value("screenSaverSync", true).toBool());
     setWin32KeepForeground(settings().value("win32KeepForeground", false).toBool());
+    setGameMode(settings().value("gameMode", true).toBool());
     haveSwitchDelay(settings().value("hasSwitchDelay", false).toBool());
     setSwitchDelay(settings().value("switchDelay", 250).toInt());
     haveSwitchDoubleTap(settings().value("hasSwitchDoubleTap", false).toBool());
@@ -258,6 +260,7 @@ QTextStream& operator<<(QTextStream& outStream, const ServerConfig& config)
     outStream << "\t" << "relativeMouseMoves = " << (config.relativeMouseMoves() ? "true" : "false") << "\n";
     outStream << "\t" << "screenSaverSync = " << (config.screenSaverSync() ? "true" : "false") << "\n";
     outStream << "\t" << "win32KeepForeground = " << (config.win32KeepForeground() ? "true" : "false") << "\n";
+    outStream << "\t" << "gameMode = " << (config.gameMode() ? "true" : "false") << "\n";
     outStream << "\t" << "clipboardSharing = " << (config.clipboardSharing() ? "true" : "false") << "\n";
     outStream << "\t" << "clipboardSharingSize = " << config.clipboardSharingSize() << "\n";
 

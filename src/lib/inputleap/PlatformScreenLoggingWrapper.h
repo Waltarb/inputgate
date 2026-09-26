@@ -70,6 +70,7 @@ public:
     void fakeInputEnd() override;
     std::int32_t getJumpZoneSize() const override;
     bool isAnyMouseButtonDown(std::uint32_t& buttonID) const override;
+    bool isGameCapturingInput() const override;
     void getCursorCenter(std::int32_t& x, std::int32_t& y) const override;
 
     // ISecondaryScreen

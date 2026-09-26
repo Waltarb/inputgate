@@ -42,6 +42,7 @@
 
 #include <string.h>
 #include <Shlobj.h>
+#include <shellapi.h>
 #include <comutil.h>
 #include <algorithm>
 
@@ -679,6 +680,63 @@ MSWindowsScreen::fakeInputEnd()
 std::int32_t MSWindowsScreen::getJumpZoneSize() const
 {
     return 1;
+}
+
+bool MSWindowsScreen::isGameCapturingInput() const
+{
+    // A game that grabs the mouse confines the cursor to its window. When
+    // nothing is confined the clip rectangle is the whole virtual screen.
+    RECT clip;
+    if (GetClipCursor(&clip)) {
+        if (clip.left > m_x || clip.top > m_y ||
+            clip.right < m_x + m_w || clip.bottom < m_y + m_h) {
+            LOG_DEBUG1("game mode: cursor confined to %ld,%ld %ldx%ld", clip.left, clip.top,
+                       clip.right - clip.left, clip.bottom - clip.top);
+            return true;
+        }
+    }
+
+    // Exclusive fullscreen DirectX / Vulkan
+    QUERY_USER_NOTIFICATION_STATE state;
+    if (SUCCEEDED(SHQueryUserNotificationState(&state)) && state == QUNS_RUNNING_D3D_FULL_SCREEN) {
+        LOG_DEBUG1("game mode: exclusive fullscreen application");
+        return true;
+    }
+
+    // Borderless fullscreen games cover their monitor and hide the cursor;
+    // a fullscreen video or slideshow shows it again when the mouse moves.
+    HWND window = GetForegroundWindow();
+    if (window == nullptr || window == m_window) {
+        return false;
+    }
+    char className[64] = {};
+    GetClassNameA(window, className, sizeof(className));
+    if (strcmp(className, "Progman") == 0 || strcmp(className, "WorkerW") == 0 ||
+        strcmp(className, "Shell_TrayWnd") == 0) {
+        return false; // the desktop itself
+    }
+
+    RECT windowRect;
+    MONITORINFO monitor = {};
+    monitor.cbSize = sizeof(monitor);
+    if (!GetWindowRect(window, &windowRect) ||
+        !GetMonitorInfo(MonitorFromWindow(window, MONITOR_DEFAULTTONEAREST), &monitor)) {
+        return false;
+    }
+    const RECT& screen = monitor.rcMonitor;
+    bool fullscreen = windowRect.left <= screen.left && windowRect.top <= screen.top &&
+                      windowRect.right >= screen.right && windowRect.bottom >= screen.bottom;
+    if (!fullscreen) {
+        return false;
+    }
+
+    CURSORINFO cursor = {};
+    cursor.cbSize = sizeof(cursor);
+    if (GetCursorInfo(&cursor) && (cursor.flags & CURSOR_SHOWING) == 0) {
+        LOG_DEBUG1("game mode: fullscreen window \"%s\" hides the cursor", className);
+        return true;
+    }
+    return false;
 }
 
 bool MSWindowsScreen::isAnyMouseButtonDown(std::uint32_t& buttonID) const

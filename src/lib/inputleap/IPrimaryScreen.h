@@ -164,6 +164,13 @@ public:
     */
     virtual bool isAnyMouseButtonDown(std::uint32_t& buttonID) const = 0;
 
+    //! Test if a game has captured the mouse
+    /*!
+    Return true if a fullscreen game or an application that confined the
+    cursor is in the foreground, so the cursor should stay on this screen.
+    */
+    virtual bool isGameCapturingInput() const { return false; }
+
     //! Get cursor center position
     /*!
     Return the cursor center position which is where we park the

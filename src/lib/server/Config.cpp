@@ -720,6 +720,9 @@ Config::readSectionOptions(ConfigReadContext& s)
 		else if (name == "win32KeepForeground") {
 			addOption("", kOptionWin32KeepForeground, s.parseBoolean(value));
 		}
+		else if (name == "gameMode") {
+			addOption("", kOptionGameMode, s.parseBoolean(value));
+		}
 		else if (name == "clipboardSharing") {
 			addOption("", kOptionClipboardSharing, s.parseBoolean(value));
 		}
@@ -1329,6 +1332,9 @@ Config::getOptionName(OptionID id)
 	if (id == kOptionWin32KeepForeground) {
 		return "win32KeepForeground";
 	}
+	if (id == kOptionGameMode) {
+		return "gameMode";
+	}
 	if (id == kOptionScreenPreserveFocus) {
 		return "preserveFocus";
 	}
@@ -1353,6 +1359,7 @@ std::string Config::getOptionValue(OptionID id, OptionValue value)
 		id == kOptionXTestXineramaUnaware ||
 		id == kOptionRelativeMouseMoves ||
 		id == kOptionWin32KeepForeground ||
+		id == kOptionGameMode ||
 		id == kOptionScreenPreserveFocus ||
 		id == kOptionClipboardSharing ||
 		id == kOptionClipboardSharingSize) {

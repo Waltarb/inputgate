@@ -46,6 +46,7 @@ ServerConfigDialog::ServerConfigDialog(QWidget* parent, ServerConfig& config, co
     ui_->m_pCheckBoxRelativeMouseMoves->setChecked(serverConfig().relativeMouseMoves());
     ui_->m_pCheckBoxScreenSaverSync->setChecked(serverConfig().screenSaverSync());
     ui_->m_pCheckBoxWin32KeepForeground->setChecked(serverConfig().win32KeepForeground());
+    ui_->m_pCheckBoxGameMode->setChecked(serverConfig().gameMode());
 
     ui_->m_pCheckBoxSwitchDelay->setChecked(serverConfig().hasSwitchDelay());
     ui_->m_pSpinBoxSwitchDelay->setValue(serverConfig().switchDelay());
@@ -85,6 +86,7 @@ void ServerConfigDialog::accept()
     serverConfig().setRelativeMouseMoves(ui_->m_pCheckBoxRelativeMouseMoves->isChecked());
     serverConfig().setScreenSaverSync(ui_->m_pCheckBoxScreenSaverSync->isChecked());
     serverConfig().setWin32KeepForeground(ui_->m_pCheckBoxWin32KeepForeground->isChecked());
+    serverConfig().setGameMode(ui_->m_pCheckBoxGameMode->isChecked());
 
     serverConfig().haveSwitchDelay(ui_->m_pCheckBoxSwitchDelay->isChecked());
     serverConfig().setSwitchDelay(ui_->m_pSpinBoxSwitchDelay->value());

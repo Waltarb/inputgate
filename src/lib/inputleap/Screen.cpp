@@ -240,6 +240,7 @@ Screen::resetOptions()
 {
     // reset options
     m_halfDuplex = 0;
+    m_gameMode = true;
 
     // if screen saver synchronization was off then turn it on since
     // that's the default option state.
@@ -260,7 +261,11 @@ Screen::setOptions(const OptionsList& options)
     // update options
     bool oldScreenSaverSync = m_screenSaverSync;
     for (std::uint32_t i = 0, n = static_cast<std::uint32_t>(options.size()); i < n; i += 2) {
-        if (options[i] == kOptionScreenSaverSync) {
+        if (options[i] == kOptionGameMode) {
+            m_gameMode = (options[i + 1] != 0);
+            LOG_DEBUG1("game mode %s", m_gameMode ? "on" : "off");
+        }
+        else if (options[i] == kOptionScreenSaverSync) {
             m_screenSaverSync = (options[i + 1] != 0);
             LOG_DEBUG1("screen saver synchronization %s", m_screenSaverSync ? "on" : "off");
         }
@@ -367,6 +372,18 @@ Screen::isLockedToScreen() const
         else {
             return true;
         }
+    }
+
+    // Game mode: a game has captured the mouse, don't let it slip away to
+    // another screen when it touches the edge
+    bool gameLocked = m_isPrimary && m_gameMode && m_screen->isGameCapturingInput();
+    if (gameLocked != m_gameLocked) {
+        m_gameLocked = gameLocked;
+        LOG_INFO("game mode: %s", gameLocked ? "a game has the mouse, staying on this screen"
+                                             : "released");
+    }
+    if (gameLocked) {
+        return true;
     }
 
     // not locked
