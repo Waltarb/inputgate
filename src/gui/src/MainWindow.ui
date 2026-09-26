@@ -25,7 +25,7 @@
        </sizepolicy>
       </property>
       <property name="title">
-       <string>Ser&amp;ver (share this computer's mouse and keyboard):</string>
+       <string>Ser&amp;ver · share this computer's keyboard and mouse</string>
       </property>
       <property name="checkable">
        <bool>true</bool>
@@ -139,7 +139,7 @@
        </sizepolicy>
       </property>
       <property name="title">
-       <string>&amp;Client (use another computer's mouse and keyboard):</string>
+       <string>&amp;Client · use another computer's keyboard and mouse</string>
       </property>
       <property name="checkable">
        <bool>true</bool>
@@ -351,7 +351,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="m_pButtonToggleStart">
+       <widget class="GoButton" name="m_pButtonToggleStart">
         <property name="text">
          <string>&amp;Start</string>
         </property>
@@ -481,6 +481,13 @@
    </property>
   </action>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>GoButton</class>
+   <extends>QPushButton</extends>
+   <header>DeparturesWidgets.h</header>
+  </customwidget>
+ </customwidgets>
  <resources>
   <include location="../res/InputLeap.qrc"/>
  </resources>

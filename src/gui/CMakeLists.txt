@@ -30,6 +30,8 @@ set(GUI_SOURCE_FILES
     src/BaseConfig.cpp
     src/CommandProcess.cpp
     src/DataDownloader.cpp
+    src/DeparturesTheme.cpp
+    src/DeparturesWidgets.cpp
     src/FingerprintAcceptDialog.cpp
     src/HotkeyDialog.cpp
     src/IpcClient.cpp
@@ -69,6 +71,8 @@ set(GUI_HEADER_FILES
     src/BaseConfig.h
     src/CommandProcess.h
     src/DataDownloader.h
+    src/DeparturesTheme.h
+    src/DeparturesWidgets.h
     src/ElevateMode.h
     src/HotkeyDialog.h
     src/IpcClient.h

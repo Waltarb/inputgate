@@ -42,6 +42,8 @@ LogWindow::LogWindow(QWidget *parent) :
     // repeatedly until InputLeap is finished
     setAttribute(Qt::WA_DeleteOnClose, false);
     ui_->setupUi(this);
+    // the log is a departure board
+    ui_->m_pLogOutput->setProperty("board", true);
 
     // purge old log entries from the log window once 10,000 lines have been reached.
     // This caps the memory use around 40 to 50MB

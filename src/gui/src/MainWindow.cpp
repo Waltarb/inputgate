@@ -19,6 +19,8 @@
 #include <iostream>
 
 #include "MainWindow.h"
+#include "DeparturesWidgets.h"
+#include "DeparturesTheme.h"
 #include "ui_MainWindow.h"
 
 #include "AboutDialog.h"
@@ -144,6 +146,7 @@ MainWindow::MainWindow(QSettings& settings, AppConfig& appConfig) :
 
     ui_->setupUi(this);
     setWindowIcon(QIcon(APP_LARGE_ICON));
+    setupDepartures();
     createMenuBar();
     loadSettings();
     initConnections();
@@ -192,6 +195,8 @@ MainWindow::MainWindow(QSettings& settings, AppConfig& appConfig) :
             ui_->toolbutton_show_fingerprint->setArrowType(Qt::ArrowType::DownArrow);
         }
     });
+
+    updateBoard();
 
     // resize window to smallest reasonable size
     resize(0, 0);
@@ -456,6 +461,24 @@ void MainWindow::updateFromLogLine(const QString &line)
 
 void MainWindow::checkConnected(const QString& line)
 {
+    // Keep the departure board up to date with the screens that are connected
+    static const QRegularExpression connectedRe(QStringLiteral("client \"(.+)\" has connected"));
+    static const QRegularExpression disconnectedRe(QStringLiteral("client \"(.+)\" has disconnected"));
+    auto connected = connectedRe.match(line);
+    auto disconnected = disconnectedRe.match(line);
+    if (connected.hasMatch()) {
+        if (!connected_screens_.contains(connected.captured(1))) {
+            connected_screens_.append(connected.captured(1));
+        }
+        updateBoard();
+    } else if (disconnected.hasMatch()) {
+        connected_screens_.removeAll(disconnected.captured(1));
+        updateBoard();
+    } else if (line.contains("disconnected from server")) {
+        connected_screens_.clear();
+        updateBoard();
+    }
+
     // TODO: implement ipc connection state messages to replace this hack.
     if (line.contains("started server") ||
         line.contains("connected to server") ||
@@ -922,7 +945,7 @@ void MainWindow::set_connection_state(AppConnectionState state)
     {
     case AppConnectionState::CONNECTED: {
         if (m_AppConfig->getCryptoEnabled()) {
-            ui_->m_pLabelPadlock->show();
+            // TLS state is shown on the status board
         }
         else {
             ui_->m_pLabelPadlock->hide();
@@ -949,6 +972,10 @@ void MainWindow::set_connection_state(AppConnectionState state)
     set_icon(state);
 
     connection_state_ = state;
+    if (state == AppConnectionState::DISCONNECTED) {
+        connected_screens_.clear();
+    }
+    updateBoard();
 }
 
 void MainWindow::setVisible(bool visible)
@@ -1456,4 +1483,103 @@ void MainWindow::windowStateChanged()
 void MainWindow::showLogWindow()
 {
     m_pLogWindow->show();
+}
+
+namespace {
+
+// The address other computers most likely use to reach this one
+QString primaryAddress()
+{
+    QString fallback;
+    for (const QHostAddress& address : QNetworkInterface::allAddresses()) {
+        if (address.protocol() != QAbstractSocket::IPv4Protocol || address.isLoopback()) {
+            continue;
+        }
+        const QString text = address.toString();
+        if (text.startsWith(QLatin1String("192.168.")) || text.startsWith(QLatin1String("10."))) {
+            return text;
+        }
+        if (fallback.isEmpty() && !text.startsWith(QLatin1String("169.254."))) {
+            fallback = text;
+        }
+    }
+    return fallback.isEmpty() ? QObject::tr("no network") : fallback;
+}
+
+} // namespace
+
+void MainWindow::setupDepartures()
+{
+    // The yellow sign and the departure board run edge to edge above the
+    // settings, which keep their own margins.
+    QWidget* content = takeCentralWidget();
+    auto* root = new QWidget(this);
+    auto* layout = new QVBoxLayout(root);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setSpacing(0);
+
+    sign_header_ = new SignHeader(root);
+    sign_header_->setPlace(getScreenName());
+    status_board_ = new StatusBoard(root);
+    layout->addWidget(sign_header_);
+    layout->addWidget(status_board_);
+    content->layout()->setContentsMargins(20, 14, 20, 20);
+    layout->addWidget(content);
+    setCentralWidget(root);
+
+    // the board shows the status now
+    ui_->m_pStatusLabel->hide();
+    ui_->m_pButtonToggleStart->setProperty("primary", true);
+    ui_->m_pButtonToggleStart->setMinimumWidth(128);
+
+    connect(ui_->m_pGroupServer, &QGroupBox::toggled, this, [this](bool) { updateBoard(); });
+    connect(ui_->m_pGroupClient, &QGroupBox::toggled, this, [this](bool) { updateBoard(); });
+    connect(ui_->m_pLineEditHostname, &QLineEdit::editingFinished, this, [this]() { updateBoard(); });
+
+    updateBoard();
+}
+
+void MainWindow::updateBoard()
+{
+    if (status_board_ == nullptr) {
+        return;
+    }
+
+    const bool server = app_role() == AppRole::Server;
+    status_board_->setGate(server ? QStringLiteral("S") : QStringLiteral("C"), server ? 1 : 3);
+
+    const QString tls = appConfig().getCryptoEnabled() ? tr("TLS on") : tr("TLS off");
+    QString host = ui_->m_pLineEditHostname->text().trimmed();
+    if (host.isEmpty()) {
+        host = tr("no server set");
+    }
+    const QString meta = server
+        ? tr("Server · %1 · port %2 · %3").arg(primaryAddress()).arg(appConfig().port()).arg(tls)
+        : tr("Client · server %1 · %2").arg(host, tls);
+
+    switch (connection_state_) {
+    case AppConnectionState::CONNECTING:
+        status_board_->setStatus(server ? tr("Starting server") : tr("Connecting to %1").arg(host),
+                                 meta, tr("Boarding"), StatusBoard::Badge::Busy);
+        break;
+    case AppConnectionState::CONNECTED:
+    case AppConnectionState::TRANSFERRING:
+        if (server) {
+            if (connected_screens_.isEmpty()) {
+                status_board_->setStatus(tr("Waiting for screens"), meta, tr("Open"),
+                                         StatusBoard::Badge::Good);
+            } else {
+                status_board_->setStatus(tr("Connected: %1").arg(connected_screens_.join(QStringLiteral(", "))),
+                                         meta, tr("Running"), StatusBoard::Badge::Good);
+            }
+        } else {
+            status_board_->setStatus(tr("Connected to %1").arg(host), meta, tr("Running"),
+                                     StatusBoard::Badge::Good);
+        }
+        break;
+    case AppConnectionState::DISCONNECTED:
+    default:
+        status_board_->setStatus(tr("Not running"), meta, tr("Stopped"), StatusBoard::Badge::Neutral);
+        break;
+    }
 }

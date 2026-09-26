@@ -18,18 +18,20 @@
 
 #include "Screen.h"
 
+#include "DeparturesTheme.h"
+
 #include <QtCore>
 #include <QtGui>
 
 Screen::Screen() :
-    m_Pixmap(QPixmap(":res/icons/64x64/video-display.png")),
+    m_Pixmap(DeparturesTheme::screenIcon()),
     m_Swapped(false)
 {
     init();
 }
 
 Screen::Screen(const QString& name) :
-    m_Pixmap(QPixmap(":res/icons/64x64/video-display.png")),
+    m_Pixmap(DeparturesTheme::screenIcon()),
     m_Swapped(false)
 {
     init();

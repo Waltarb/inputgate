@@ -55,6 +55,8 @@ class QAbstractButton;
 class LogDialog;
 class QInputLeapApplication;
 class SetupWizard;
+class SignHeader;
+class StatusBoard;
 class ZeroconfService;
 class DataDownloader;
 class CommandProcess;
@@ -164,6 +166,8 @@ public slots:
         void proofreadInfo();
         void windowStateChanged();
         void updateSSLFingerprint();
+        void setupDepartures();
+        void updateBoard();
 
     private:
         std::unique_ptr<Ui::MainWindow> ui_;
@@ -171,6 +175,9 @@ public slots:
         AppConfig* m_AppConfig;
         QProcess* cmd_app_process_;
         AppConnectionState connection_state_ = AppConnectionState::DISCONNECTED;
+        SignHeader* sign_header_ = nullptr;
+        StatusBoard* status_board_ = nullptr;
+        QStringList connected_screens_;
         ServerConfig m_ServerConfig;
         QTemporaryFile* m_pTempConfigFile;
         QSystemTrayIcon* m_pTrayIcon;

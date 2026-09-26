@@ -17,6 +17,7 @@
  */
 
 #include "ServerConfigDialog.h"
+#include "DeparturesTheme.h"
 #include <ui_ServerConfigDialog.h>
 
 #include "ServerConfig.h"
@@ -36,6 +37,8 @@ ServerConfigDialog::ServerConfigDialog(QWidget* parent, ServerConfig& config, co
     m_Message("")
 {
     ui_->setupUi(this);
+    ui_->m_pTrashScreenWidget->setPixmap(DeparturesTheme::trashIcon());
+    ui_->m_pLabelNewScreenWidget->setPixmap(DeparturesTheme::screenIcon());
 
     ui_->m_pCheckBoxHeartbeat->setChecked(serverConfig().hasHeartbeat());
     ui_->m_pSpinBoxHeartbeat->setValue(serverConfig().heartbeat());

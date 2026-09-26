@@ -16,6 +16,7 @@
  */
 
 #include "AddClientDialog.h"
+#include "DeparturesTheme.h"
 #include "ui_AddClientDialog.h"
 
 #include <QPushButton>
@@ -32,7 +33,7 @@ AddClientDialog::AddClientDialog(const QString& clientName, QWidget* parent) :
     ui_->m_pLabelHead->setText("A client wants to connect. "
                     "Please choose a location for " + clientName + ".");
 
-    QIcon icon(":res/icons/64x64/video-display.png");
+    QIcon icon(DeparturesTheme::screenIcon());
     QSize IconSize(32,32);
 
     m_pButtonLeft = new QPushButton(this);
@@ -60,7 +61,7 @@ AddClientDialog::AddClientDialog(const QString& clientName, QWidget* parent) :
     connect(m_pButtonDown, &QPushButton::clicked, this, &AddClientDialog::handleButtonDown);
 
     m_pLabelCenter = new QLabel(this);
-    m_pLabelCenter->setPixmap(QPixmap(":res/icons/64x64/video-display.png"));
+    m_pLabelCenter->setPixmap(DeparturesTheme::screenIcon());
     ui_->gridLayout->addWidget(m_pLabelCenter, 2, 1, 1, 1, Qt::AlignCenter);
 
 #if defined(Q_OS_MAC)

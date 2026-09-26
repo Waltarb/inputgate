@@ -1,5 +1,12 @@
 <RCC>
     <qresource prefix="/res">
+        <file>fonts/Barlow-Regular.ttf</file>
+        <file>fonts/Barlow-Medium.ttf</file>
+        <file>fonts/Barlow-SemiBold.ttf</file>
+        <file>fonts/Barlow-Bold.ttf</file>
+        <file>fonts/BarlowCondensed-SemiBold.ttf</file>
+        <file>fonts/BarlowCondensed-Bold.ttf</file>
+        <file>fonts/BarlowCondensed-ExtraBold.ttf</file>
         <file>icons/128x128/input-leap-connected.png</file>
         <file>icons/128x128/input-leap-disconnected.png</file>
         <file>icons/64x64/video-display.png</file>

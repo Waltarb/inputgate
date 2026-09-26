@@ -23,6 +23,7 @@
 #include "MainWindow.h"
 #include "AppConfig.h"
 #include "SetupWizard.h"
+#include "DeparturesTheme.h"
 
 #include <QtCore>
 #include <QtGui>
@@ -87,6 +88,7 @@ int main(int argc, char* argv[])
     QCoreApplication::setApplicationName("InputLeap");
 
     QInputLeapApplication app(argc, argv);
+    DeparturesTheme::install(app);
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
     app.setDesktopFileName(QStringLiteral("io.github.input_leap.input-leap"));
