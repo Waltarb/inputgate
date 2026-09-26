@@ -124,15 +124,7 @@ MSWindowsClipboard::open(Time time) const
 {
     LOG_DEBUG("open clipboard");
 
-    // Files copied in Explorer may only be reachable through OLE, see
-    // MSWindowsClipboardFileConverter::read_ole_file_list(). That has to
-    // happen while the clipboard is closed.
     m_oleFiles.clear();
-    static const UINT data_object_format = RegisterClipboardFormat(TEXT("DataObject"));
-    if (!IsClipboardFormatAvailable(CF_HDROP) && IsClipboardFormatAvailable(data_object_format)) {
-        m_oleFiles = MSWindowsClipboardFileConverter::read_ole_file_list();
-    }
-
     if (!OpenClipboard(m_window)) {
         // unable to cause this in integ tests; but this can happen!
         // * http://symless.com/pm/issues/86
@@ -144,18 +136,36 @@ MSWindowsClipboard::open(Time time) const
 
     m_time = time;
 
-    // list what is on the clipboard, to diagnose formats we don't pick up
-    if (CLOG->getFilter() >= kDEBUG) {
-        std::string formats;
-        for (UINT format = EnumClipboardFormats(0); format != 0;
-             format = EnumClipboardFormats(format)) {
-            char name[128];
-            if (GetClipboardFormatNameA(format, name, sizeof(name)) == 0) {
-                snprintf(name, sizeof(name), "#%u", format);
-            }
-            formats += formats.empty() ? name : std::string(", ") + name;
+    // Look at what is on the clipboard. Only the formats seen while the
+    // clipboard is open are reliable for a process running as SYSTEM.
+    static const UINT data_object_format = RegisterClipboardFormat(TEXT("DataObject"));
+    bool has_data_object = false;
+    bool has_hdrop = false;
+    std::string formats;
+    for (UINT format = EnumClipboardFormats(0); format != 0;
+         format = EnumClipboardFormats(format)) {
+        has_data_object = has_data_object || format == data_object_format;
+        has_hdrop = has_hdrop || format == CF_HDROP;
+        char name[128];
+        if (GetClipboardFormatNameA(format, name, sizeof(name)) == 0) {
+            snprintf(name, sizeof(name), "#%u", format);
         }
-        LOG_DEBUG("clipboard formats: %s (last error %lu)", formats.c_str(), GetLastError());
+        formats += formats.empty() ? name : std::string(", ") + name;
+    }
+    LOG_DEBUG("clipboard formats: %s", formats.c_str());
+
+    // Files copied in Explorer are put on the clipboard through OLE. A process
+    // running as SYSTEM (the Inputgate service starts the server that way)
+    // then only sees the "DataObject" marker, so get the file list from
+    // Explorer's data object. That needs the clipboard to be closed.
+    if (has_data_object && !has_hdrop) {
+        CloseClipboard();
+        m_oleFiles = MSWindowsClipboardFileConverter::read_ole_file_list();
+        if (!OpenClipboard(m_window)) {
+            LOG_WARN("failed to reopen clipboard: %d", GetLastError());
+            m_oleFiles.clear();
+            return false;
+        }
     }
 
     return true;
