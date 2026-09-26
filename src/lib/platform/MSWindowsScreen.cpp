@@ -1377,10 +1377,10 @@ bool MSWindowsScreen::onMouseMove(std::int32_t mx, std::int32_t my)
         return true;
     }
 
-    // save position to compute delta of next motion
-    saveMousePosition(mx, my);
-
     if (m_isOnScreen) {
+
+        // save position to compute delta of next motion
+        saveMousePosition(mx, my);
 
         // motion on primary screen
         sendEvent(EventType::PRIMARY_SCREEN_MOTION_ON_PRIMARY,
@@ -1410,9 +1410,16 @@ bool MSWindowsScreen::onMouseMove(std::int32_t mx, std::int32_t my)
             -y + bogusZoneSize > m_yCenter - m_y ||
              y + bogusZoneSize > m_y + m_h - m_yCenter) {
 
+            // don't save the bogus position: the cursor really is at the
+            // center, and a motion queued before the warp above is
+            // relative to it.  measuring that motion from the bogus
+            // position would send a huge jump back the way we came.
             LOG_DEBUG("dropped bogus delta motion: %+d,%+d", x, y);
         }
         else {
+            // save position to compute delta of next motion
+            saveMousePosition(mx, my);
+
             // send motion
             sendEvent(EventType::PRIMARY_SCREEN_MOTION_ON_SECONDARY,
                       create_event_data<MotionInfo>(MotionInfo{x, y}));
