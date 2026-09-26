@@ -124,6 +124,15 @@ MSWindowsClipboard::open(Time time) const
 {
     LOG_DEBUG("open clipboard");
 
+    // Files copied in Explorer may only be reachable through OLE, see
+    // MSWindowsClipboardFileConverter::read_ole_file_list(). That has to
+    // happen while the clipboard is closed.
+    m_oleFiles.clear();
+    static const UINT data_object_format = RegisterClipboardFormat(TEXT("DataObject"));
+    if (!IsClipboardFormatAvailable(CF_HDROP) && IsClipboardFormatAvailable(data_object_format)) {
+        m_oleFiles = MSWindowsClipboardFileConverter::read_ole_file_list();
+    }
+
     if (!OpenClipboard(m_window)) {
         // unable to cause this in integ tests; but this can happen!
         // * http://symless.com/pm/issues/86
@@ -168,6 +177,9 @@ MSWindowsClipboard::getTime() const
 bool
 MSWindowsClipboard::has(EFormat format) const
 {
+    if (format == kFileList && !m_oleFiles.empty()) {
+        return true;
+    }
     for (auto index = m_converters.begin(); index != m_converters.end(); ++index) {
         IMSWindowsClipboardConverter* converter = *index;
         if (converter->getFormat() == format) {
@@ -181,6 +193,10 @@ MSWindowsClipboard::has(EFormat format) const
 
 std::string MSWindowsClipboard::get(EFormat format) const
 {
+    if (format == kFileList && !m_oleFiles.empty()) {
+        return MSWindowsClipboardFileConverter::pack(m_oleFiles);
+    }
+
     // find the converter for the first clipboard format we can handle
     IMSWindowsClipboardConverter* converter = nullptr;
     for (auto index = m_converters.begin(); index != m_converters.end(); ++index) {

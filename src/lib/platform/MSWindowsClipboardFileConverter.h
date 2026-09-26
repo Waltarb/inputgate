@@ -32,6 +32,12 @@ public:
     UINT getWin32Format() const override;
     HANDLE fromIClipboard(const std::string&) const override;
     std::string toIClipboard(HANDLE) const override;
+
+    //! Reads the copied files through OleGetClipboard(). The clipboard must not be open.
+    static std::vector<std::wstring> read_ole_file_list();
+
+    //! Packs files into a FileBundle, empty on failure
+    static std::string pack(const std::vector<std::wstring>& files);
 };
 
 } // namespace inputleap

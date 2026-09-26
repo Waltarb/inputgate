@@ -24,6 +24,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
+#include <string>
 #include <vector>
 
 namespace inputleap {
@@ -85,6 +86,9 @@ private:
     static UINT            s_ownershipFormat;
     IMSWindowsClipboardFacade* m_facade;
     bool m_deleteFacade;
+    // Files copied in Explorer, read through OLE when the plain clipboard
+    // only shows a "DataObject" (see open())
+    mutable std::vector<std::wstring> m_oleFiles;
 };
 
 //! Clipboard format converter interface
