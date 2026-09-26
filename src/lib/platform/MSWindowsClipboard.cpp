@@ -135,6 +135,20 @@ MSWindowsClipboard::open(Time time) const
 
     m_time = time;
 
+    // list what is on the clipboard, to diagnose formats we don't pick up
+    if (CLOG->getFilter() >= kDEBUG) {
+        std::string formats;
+        for (UINT format = EnumClipboardFormats(0); format != 0;
+             format = EnumClipboardFormats(format)) {
+            char name[128];
+            if (GetClipboardFormatNameA(format, name, sizeof(name)) == 0) {
+                snprintf(name, sizeof(name), "#%u", format);
+            }
+            formats += formats.empty() ? name : std::string(", ") + name;
+        }
+        LOG_DEBUG("clipboard formats: %s (last error %lu)", formats.c_str(), GetLastError());
+    }
+
     return true;
 }
 
@@ -187,6 +201,7 @@ std::string MSWindowsClipboard::get(EFormat format) const
     // get a handle to the clipboard data
     HANDLE win32Data = GetClipboardData(converter->getWin32Format());
     if (win32Data == nullptr) {
+        LOG_DEBUG("can't get clipboard format %d: error %lu", format, GetLastError());
         // nb: can't cause this using integ tests; this is only caused when
         // the selected converter returns an invalid format -- which you
         // cannot cause using public functions.
