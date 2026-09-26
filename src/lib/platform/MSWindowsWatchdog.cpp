@@ -285,11 +285,24 @@ MSWindowsWatchdog::startProcess()
     if (!m_daemonized) {
         createRet = doStartProcessAsSelf(m_command);
     } else {
-        m_autoElevated = activeDesktopName() != "Default";
+        /*  Elevate on the login and lock screens so they can be controlled.
+            The service runs in session 0 and usually can't open the input
+            desktop, which used to be read as "not the Default desktop" and
+            made the server run as SYSTEM all the time. A SYSTEM process can't
+            see files copied in Explorer, so only elevate when we know we're
+            on a secure desktop: LogonUI.exe runs exactly then. */
+        std::string desktop = activeDesktopName();
+        if (!desktop.empty()) {
+            m_autoElevated = desktop != "Default";
+        } else {
+            m_autoElevated = m_session.isProcessInSession("LogonUI.exe", nullptr);
+            LOG_DEBUG("desktop name unknown, login screen %s",
+                      m_autoElevated ? "showing" : "not showing");
+        }
 
         SECURITY_ATTRIBUTES sa{ 0 };
         HANDLE userToken = getUserToken(&sa);
-        m_elevateProcess = m_autoElevated ? m_autoElevated : m_elevateProcess;
+        m_startedElevated = m_elevateProcess || m_autoElevated;
         m_autoElevated = false;
 
         // patch by Jack Zhou and Henry Tung
@@ -320,7 +333,7 @@ MSWindowsWatchdog::startProcess()
 
         LOG_DEBUG("started process, session=%i, elevated: %s, command=%s",
             m_session.getActiveSessionId(),
-            m_elevateProcess ? "yes" : "no",
+            m_startedElevated ? "yes" : "no",
             m_command.c_str());
     }
 }

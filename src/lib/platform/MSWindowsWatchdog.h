@@ -78,6 +78,8 @@ private:
     bool m_processRunning;
     FileLogOutputter* m_fileLogOutputter;
     bool m_autoElevated;
+    // whether the running process was started elevated
+    bool m_startedElevated = false;
     bool m_daemonized;
 };
 
