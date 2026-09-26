@@ -437,6 +437,22 @@ keyboardLLHook(int code, WPARAM wParam, LPARAM lParam)
 }
 #endif // !NO_GRAB_KEYBOARD
 
+// A game that captures the mouse hides the cursor or confines it to its
+// window.  Only called in the jump zone, so the cost stays off the hot path.
+static bool isCursorCaptured()
+{
+    CURSORINFO cursor = {};
+    cursor.cbSize = sizeof(cursor);
+    if (GetCursorInfo(&cursor) && (cursor.flags & CURSOR_SHOWING) == 0) {
+        return true;
+    }
+
+    RECT clip;
+    return GetClipCursor(&clip) &&
+           (clip.left > g_xScreen || clip.top > g_yScreen ||
+            clip.right < g_xScreen + g_wScreen || clip.bottom < g_yScreen + g_hScreen);
+}
+
 static bool mouseHookHandler(WPARAM wParam, std::int32_t x, std::int32_t y, std::int32_t data)
 {
     switch (wParam) {
@@ -532,8 +548,10 @@ static bool mouseHookHandler(WPARAM wParam, std::int32_t x, std::int32_t y, std:
             // relay the event
             PostThreadMessage(g_threadID, INPUTLEAP_MSG_MOUSE_MOVE, x, y);
 
-            // if inside and not bogus then eat the event
-            return inside && !bogus;
+            // if inside and not bogus then eat the event, unless a game has
+            // the mouse: its hidden cursor often rests on the edge, and
+            // eating the motion there would freeze the game's view.
+            return inside && !bogus && !isCursorCaptured();
         }
     }
 
