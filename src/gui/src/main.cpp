@@ -71,8 +71,8 @@ int main(int argc, char* argv[])
         // We're running on X11, all good.
         // Continue running.
     } else if (platformType == "wayland") {
-        QMessageBox::information(nullptr, "Input Leap",
-                                 "You are using Wayland. Input Leap supports Wayland via `libei` "
+        QMessageBox::information(nullptr, "Inputgate",
+                                 "You are using Wayland. Inputgate supports Wayland via `libei` "
                                  "but not all desktop environment/window managers support our "
                                  "implementation at this time. Therefore, your mileage may vary.");
     }
@@ -201,7 +201,7 @@ bool checkMacAssistiveDevices()
 	bool result = AXAPIEnabled();
 	if (!result) {
 		QMessageBox::information(
-            nullptr, "InputLeap",
+            nullptr, "Inputgate",
 			"Please enable access to assistive devices "
 			"System Preferences -> Security & Privacy -> "
             "Privacy -> Accessibility, then re-open InputLeap.");
