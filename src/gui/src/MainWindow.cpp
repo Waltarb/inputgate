@@ -259,6 +259,7 @@ void MainWindow::createTrayIcon()
 
     m_pTrayIconMenu->addAction(ui_->m_pActionStartCmdApp);
     m_pTrayIconMenu->addAction(ui_->m_pActionStopCmdApp);
+    m_pTrayIconMenu->addAction(gaming_mode_action_);
     m_pTrayIconMenu->addAction(ui_->m_pActionShowLog);
     m_pTrayIconMenu->addAction(ui_->m_pActionReload);
     m_pTrayIconMenu->addSeparator();
@@ -348,7 +349,52 @@ void MainWindow::initConnections()
     connect(ui_->m_pActionStopCmdApp, &QAction::triggered, this, &MainWindow::stop_cmd_app);
     connect(ui_->m_pActionShowLog, &QAction::triggered, this, &MainWindow::showLogWindow);
     connect(ui_->m_pActionReload, &QAction::triggered, this, &MainWindow::restart_cmd_app);
-    connect(ui_->m_pActionQuit, &QAction::triggered, qApp, &QCoreApplication::quit);
+    connect(ui_->m_pActionQuit, &QAction::triggered, this, &MainWindow::quit);
+
+    gaming_mode_action_ = new QAction(tr("&Gaming mode"), this);
+    gaming_mode_action_->setCheckable(true);
+    gaming_mode_action_->setStatusTip(tr("Stop Inputgate completely while you play"));
+    connect(gaming_mode_action_, &QAction::toggled, this, &MainWindow::setGamingMode);
+    connect(ui_->m_pButtonGamingMode, &QPushButton::toggled, this, &MainWindow::setGamingMode);
+}
+
+// Gaming mode stops the server or client completely, so nothing hooks the
+// keyboard and mouse while a game runs. Leaving it starts it again.
+void MainWindow::setGamingMode(bool on)
+{
+    if (on == gaming_mode_) {
+        return;
+    }
+    gaming_mode_ = on;
+    {
+        QSignalBlocker blockAction(gaming_mode_action_);
+        QSignalBlocker blockButton(ui_->m_pButtonGamingMode);
+        gaming_mode_action_->setChecked(on);
+        ui_->m_pButtonGamingMode->setChecked(on);
+    }
+
+    if (on) {
+        appendLogInfo("gaming mode on, stopping");
+        stop_cmd_app();
+    }
+    else {
+        appendLogInfo("gaming mode off, starting");
+        start_cmd_app();
+    }
+    updateBoard();
+}
+
+void MainWindow::quit()
+{
+    // The service keeps running the last command it was given, even without
+    // the GUI. Quitting means stopping, so tell it to stop and make sure the
+    // message is out before the event loop ends.
+    if (appConfig().processMode() == Service) {
+        m_ExpectedRunningState = kStopped;
+        stopService();
+        m_IpcClient.flush(1000);
+    }
+    qApp->quit();
 }
 
 void MainWindow::saveSettings()
@@ -589,6 +635,15 @@ void MainWindow::start_cmd_app()
 {
     bool desktopMode = appConfig().processMode() == Desktop;
     bool serviceMode = appConfig().processMode() == Service;
+
+    // starting by hand ends gaming mode
+    if (gaming_mode_) {
+        gaming_mode_ = false;
+        QSignalBlocker blockAction(gaming_mode_action_);
+        QSignalBlocker blockButton(ui_->m_pButtonGamingMode);
+        gaming_mode_action_->setChecked(false);
+        ui_->m_pButtonGamingMode->setChecked(false);
+    }
 
     appendLogDebug("starting process");
     m_ExpectedRunningState = kStarted;
@@ -1579,6 +1634,11 @@ void MainWindow::updateBoard()
         break;
     case AppConnectionState::DISCONNECTED:
     default:
+        if (gaming_mode_) {
+            status_board_->setStatus(tr("Gaming mode"), tr("Inputgate is stopped while you play"),
+                                     tr("Paused"), StatusBoard::Badge::Busy);
+            break;
+        }
         status_board_->setStatus(tr("Not running"), meta, tr("Stopped"), StatusBoard::Badge::Neutral);
         break;
     }

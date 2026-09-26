@@ -168,6 +168,8 @@ public slots:
         void updateSSLFingerprint();
         void setupDepartures();
         void updateBoard();
+        void setGamingMode(bool on);
+        void quit();
 
     private:
         std::unique_ptr<Ui::MainWindow> ui_;
@@ -177,6 +179,8 @@ public slots:
         AppConnectionState connection_state_ = AppConnectionState::DISCONNECTED;
         SignHeader* sign_header_ = nullptr;
         StatusBoard* status_board_ = nullptr;
+        QAction* gaming_mode_action_ = nullptr;
+        bool gaming_mode_ = false;
         QStringList connected_screens_;
         ServerConfig m_ServerConfig;
         QTemporaryFile* m_pTempConfigFile;

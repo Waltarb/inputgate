@@ -36,6 +36,7 @@ public:
 
     void sendHello();
     void sendCommand(const QString& command, ElevateMode elevate);
+    void flush(int msecs);
     void connectToHost();
     void disconnectFromHost();
 

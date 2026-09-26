@@ -123,6 +123,14 @@ void IpcClient::sendCommand(const QString& command, ElevateMode const elevate)
     stream.writeRawData(elevateBuf, 1);
 }
 
+// Wait until what was sent has been written, e.g. before the GUI quits.
+void IpcClient::flush(int msecs)
+{
+    if (m_Socket->state() == QAbstractSocket::ConnectedState) {
+        m_Socket->waitForBytesWritten(msecs);
+    }
+}
+
 void IpcClient::handleReadLogLine(const QString& text)
 {
     Q_EMIT readLogLine(text);
