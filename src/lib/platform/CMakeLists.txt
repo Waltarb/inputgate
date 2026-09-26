@@ -27,8 +27,28 @@ if (BUILD_XWINDOWS)
     file(GLOB xwin_sources "XWindows*.cpp")
 endif()
 if (BUILD_LIBEI)
-    file(GLOB ei_headers "Ei*.h" "Portal*.h")
-    file(GLOB ei_sources "Ei*.cpp" "Portal*.cpp")
+    file(GLOB ei_headers "Ei*.h" "Portal*.h" "Wayland*.h")
+    file(GLOB ei_sources "Ei*.cpp" "Portal*.cpp" "Wayland*.cpp")
+
+    # Generate the client code for the Wayland protocols we use
+    set(wayland_protocol_dir "${CMAKE_CURRENT_SOURCE_DIR}/wayland-protocols")
+    set(wayland_generated_dir "${CMAKE_CURRENT_BINARY_DIR}/wayland-protocols")
+    file(MAKE_DIRECTORY ${wayland_generated_dir})
+    foreach(protocol ext-data-control-v1 wlr-data-control-unstable-v1)
+        set(xml "${wayland_protocol_dir}/${protocol}.xml")
+        set(header "${wayland_generated_dir}/${protocol}-client-protocol.h")
+        set(code "${wayland_generated_dir}/${protocol}-protocol.c")
+        add_custom_command(OUTPUT ${header}
+            COMMAND ${WAYLAND_SCANNER} client-header ${xml} ${header}
+            DEPENDS ${xml} VERBATIM)
+        add_custom_command(OUTPUT ${code}
+            COMMAND ${WAYLAND_SCANNER} private-code ${xml} ${code}
+            DEPENDS ${xml} VERBATIM)
+        list(APPEND ei_headers ${header})
+        list(APPEND ei_sources ${header} ${code})
+        set_source_files_properties(${code} PROPERTIES SKIP_UNITY_BUILD_INCLUSION TRUE)
+    endforeach()
+    list(APPEND inc ${wayland_generated_dir})
 endif()
 if (BUILD_XWINDOWS OR BUILD_LIBEI)
     file(GLOB xkb_headers "XKB*.h")

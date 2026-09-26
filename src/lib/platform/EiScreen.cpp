@@ -17,6 +17,7 @@
 #include "platform/EiScreen.h"
 
 #include "platform/EiEventQueueBuffer.h"
+#include "platform/WaylandClipboard.h"
 #include "platform/PortalRemoteDesktop.h"
 #include "platform/PortalInputCapture.h"
 #include "platform/EiKeyState.h"
@@ -50,6 +51,7 @@ EiScreen::EiScreen(bool is_primary, IEventQueue* events, bool use_portal) :
     is_on_screen_(is_primary)
 {
     init_ei();
+    init_clipboard();
     key_state_ = new EiKeyState(this, events);
     // install event handlers
     events_->add_handler(EventType::SYSTEM, events_->getSystemTarget(),
@@ -84,6 +86,7 @@ EiScreen::~EiScreen()
     events_->set_buffer(nullptr);
     events_->remove_handler(EventType::SYSTEM, events_->getSystemTarget());
 
+    clipboard_.reset();
     cleanup_ei();
 
     delete key_state_;
@@ -167,9 +170,27 @@ const EventTarget* EiScreen::get_event_target() const
     return this;
 }
 
+void EiScreen::init_clipboard()
+{
+    if (std::getenv("INPUTGATE_NO_WAYLAND_CLIPBOARD")) {
+        LOG_NOTE("wayland clipboard disabled by INPUTGATE_NO_WAYLAND_CLIPBOARD");
+        return;
+    }
+    try {
+        clipboard_ = std::make_unique<WaylandClipboard>([this](ClipboardID id) {
+            ClipboardInfo info;
+            info.m_id = id;
+            info.m_sequenceNumber = sequence_number_;
+            send_event(EventType::CLIPBOARD_GRABBED, create_event_data<ClipboardInfo>(info));
+        });
+    } catch (const std::exception& e) {
+        LOG_WARN("clipboard sharing is not available: %s", e.what());
+    }
+}
+
 bool EiScreen::getClipboard(ClipboardID id, IClipboard* clipboard) const
 {
-    return false;
+    return clipboard_ && clipboard_->get(id, clipboard);
 }
 
 void EiScreen::getShape(int32_t& x, int32_t& y, int32_t& w, int32_t& h) const
@@ -376,12 +397,12 @@ void EiScreen::leave()
 
 bool EiScreen::setClipboard(ClipboardID id, const IClipboard* clipboard)
 {
-    return false;
+    return clipboard_ && clipboard_->set(id, clipboard);
 }
 
 void EiScreen::checkClipboards()
 {
-    // do nothing, we're always up to date
+    // do nothing, WaylandClipboard reports changes as they happen
 }
 
 void EiScreen::openScreensaver(bool notify)

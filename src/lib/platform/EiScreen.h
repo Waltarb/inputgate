@@ -26,6 +26,8 @@
 
 #include <libei.h>
 
+#include <memory>
+
 struct ei;
 struct ei_event;
 struct ei_seat;
@@ -35,6 +37,7 @@ namespace inputleap {
 
 class EiClipboard;
 class EiKeyState;
+class WaylandClipboard;
 class PortalRemoteDesktop;
 #if HAVE_LIBPORTAL_INPUTCAPTURE
 class PortalInputCapture;
@@ -102,6 +105,7 @@ protected:
 
 private:
     void init_ei();
+    void init_clipboard();
     void cleanup_ei();
     void send_event(EventType type, EventDataBase* data);
     ButtonID map_button_from_evdev(ei_event* event) const;
@@ -163,6 +167,9 @@ private:
     double buffer_dy = 0;
 
     mutable std::mutex mutex_;
+
+    // null if the compositor doesn't support Wayland clipboard access
+    std::unique_ptr<WaylandClipboard> clipboard_;
 
     PortalRemoteDesktop* portal_remote_desktop_ = nullptr;
 #if HAVE_LIBPORTAL_INPUTCAPTURE
