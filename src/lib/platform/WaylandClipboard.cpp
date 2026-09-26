@@ -16,6 +16,7 @@
  */
 
 #include "platform/WaylandClipboard.h"
+#include "platform/WaylandImageConverter.h"
 
 #include "inputleap/Clipboard.h"
 #include "inputleap/FileBundle.h"
@@ -761,6 +762,14 @@ bool WaylandClipboard::get(ClipboardID id, IClipboard* clipboard) const
             snapshot.add(IClipboard::kBitmap, dib);
         }
     }
+    // Linux apps usually only offer PNG, but many Windows apps (Paint, ...)
+    // only paste bitmaps, so provide one
+    if (!snapshot.has(IClipboard::kBitmap) && snapshot.has(IClipboard::kPNG)) {
+        auto dib = WaylandImageConverter::png_to_dib(snapshot.get(IClipboard::kPNG));
+        if (!dib.empty()) {
+            snapshot.add(IClipboard::kBitmap, dib);
+        }
+    }
     if (has(kUriListMime) && fetch(kUriListMime, data)) {
         auto paths = FileBundle::from_uri_list(data);
         std::string bundle;
@@ -805,9 +814,17 @@ bool WaylandClipboard::set(ClipboardID id, const IClipboard* clipboard)
             }
         }
         if (snapshot->has(IClipboard::kBitmap)) {
-            auto bmp = dib_to_bmp(snapshot->get(IClipboard::kBitmap));
+            auto dib = snapshot->get(IClipboard::kBitmap);
+            auto bmp = dib_to_bmp(dib);
             if (!bmp.empty()) {
                 (*data)["image/bmp"] = bmp;
+            }
+            // Windows only sends bitmaps; most Linux apps want PNG
+            if (!snapshot->has(IClipboard::kPNG)) {
+                auto png = WaylandImageConverter::dib_to_png(dib);
+                if (!png.empty()) {
+                    (*data)["image/png"] = png;
+                }
             }
         }
         if (snapshot->has(IClipboard::kFileList)) {

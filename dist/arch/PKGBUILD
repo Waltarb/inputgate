@@ -13,7 +13,7 @@ url="https://github.com/Waltarb/inputgate"
 license=('GPL-2.0-only')
 depends=('qt6-base' 'libei' 'libportal' 'libxkbcommon' 'wayland' 'openssl' 'avahi'
          'libx11' 'libxext' 'libxtst' 'libxinerama' 'libxrandr' 'libxi' 'libice' 'libsm'
-         'glib2' 'hicolor-icon-theme')
+         'glib2' 'zlib' 'hicolor-icon-theme')
 makedepends=('cmake' 'ninja' 'qt6-tools' 'git')
 provides=('input-leap')
 conflicts=('input-leap' 'input-leap-git')

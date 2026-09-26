@@ -19,6 +19,15 @@
 
 #include "base/Log.h"
 
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <userenv.h>
+#include <wtsapi32.h>
+#pragma comment(lib, "wtsapi32.lib")
+#pragma comment(lib, "userenv.lib")
+#endif
+
 #include <chrono>
 #include <cstdlib>
 #include <ctime>
@@ -220,6 +229,31 @@ std::string timestamp_folder_name()
     std::strftime(buf, sizeof(buf), "%Y-%m-%d_%H-%M-%S", &tm);
     return buf;
 }
+
+#ifdef _WIN32
+/*  The server is normally started by the Inputgate service and then runs as
+    SYSTEM inside the user's session, so USERPROFILE points at the system
+    profile. Look up the profile of the user logged into our session. */
+fs::path session_user_profile()
+{
+    DWORD session = 0;
+    if (!ProcessIdToSessionId(GetCurrentProcessId(), &session)) {
+        return {};
+    }
+    HANDLE token = nullptr;
+    if (!WTSQueryUserToken(session, &token)) {
+        return {}; // not running as SYSTEM, USERPROFILE is right
+    }
+    wchar_t buf[MAX_PATH];
+    DWORD size = MAX_PATH;
+    fs::path result;
+    if (GetUserProfileDirectoryW(token, buf, &size)) {
+        result = fs::path(buf);
+    }
+    CloseHandle(token);
+    return result;
+}
+#endif
 
 #ifndef _WIN32
 // Reads XDG_DOWNLOAD_DIR from ~/.config/user-dirs.dirs
@@ -447,8 +481,13 @@ fs::path FileBundle::receive_dir()
             return fs::path(dir);
         }
     }
-    const wchar_t* profile = _wgetenv(L"USERPROFILE");
-    fs::path base = profile ? fs::path(profile) / "Downloads" : fs::temp_directory_path();
+    fs::path profile = session_user_profile();
+    if (profile.empty()) {
+        if (const wchar_t* env = _wgetenv(L"USERPROFILE")) {
+            profile = fs::path(env);
+        }
+    }
+    fs::path base = profile.empty() ? fs::temp_directory_path() : profile / "Downloads";
 #else
     if (const char* dir = std::getenv("INPUTGATE_RECEIVE_DIR")) {
         if (*dir) {
