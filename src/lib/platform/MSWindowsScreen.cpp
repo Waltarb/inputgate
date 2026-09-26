@@ -210,8 +210,11 @@ MSWindowsScreen::enable()
     m_events->add_handler(EventType::TIMER, m_fixTimer,
                           [this](const auto& e){ handle_fixes(); });
 
-    // install our clipboard snooper
+    // install our clipboard snooper. The viewer chain is kept for old
+    // setups, but it is known to drop notifications on current Windows,
+    // so also listen for WM_CLIPBOARDUPDATE.
     m_nextClipboardWindow = SetClipboardViewer(m_window);
+    AddClipboardFormatListener(m_window);
 
     // track the active desk and (re)install the hooks
     m_desks->enable();
@@ -254,6 +257,7 @@ MSWindowsScreen::disable()
     m_keyState->disable();
 
     // stop snooping the clipboard
+    RemoveClipboardFormatListener(m_window);
     ChangeClipboardChain(m_window, m_nextClipboardWindow);
     m_nextClipboardWindow = nullptr;
 
@@ -414,11 +418,9 @@ MSWindowsScreen::checkClipboards()
     // next reboot we do this double check.  clipboard ownership
     // won't be reflected on other screens until we leave but at
     // least the clipboard itself will work.
-    if (m_ownClipboard && !MSWindowsClipboard::is_owned_by_us()) {
-        LOG_DEBUG("clipboard changed: lost ownership and no notification received");
-        m_ownClipboard = false;
-        sendClipboardEvent(EventType::CLIPBOARD_GRABBED, kClipboardClipboard);
-        sendClipboardEvent(EventType::CLIPBOARD_GRABBED, kClipboardSelection);
+    if (GetClipboardSequenceNumber() != m_clipboardSequence) {
+        LOG_DEBUG("clipboard changed without a notification");
+        onClipboardChange();
     }
 }
 
@@ -1018,6 +1020,9 @@ MSWindowsScreen::onEvent(HWND, UINT msg,
         // now handle the message
         return onClipboardChange();
 
+    case WM_CLIPBOARDUPDATE:
+        return onClipboardChange();
+
     case WM_CHANGECBCHAIN:
         if (m_nextClipboardWindow == (HWND)wParam) {
             m_nextClipboardWindow = (HWND)lParam;
@@ -1447,15 +1452,22 @@ MSWindowsScreen::onDisplayChange()
 bool
 MSWindowsScreen::onClipboardChange()
 {
+    // both the viewer chain and the format listener report changes, only
+    // handle each change once
+    DWORD sequence = GetClipboardSequenceNumber();
+    if (sequence == m_clipboardSequence) {
+        return true;
+    }
+    m_clipboardSequence = sequence;
+
     // now notify client that somebody changed the clipboard (unless
-    // we're the owner).
+    // we're the owner). Report every change, not only the first one after
+    // we owned the clipboard, so copying twice in a row is noticed too.
     if (!MSWindowsClipboard::is_owned_by_us()) {
-        if (m_ownClipboard) {
-            LOG_DEBUG("clipboard changed: lost ownership");
-            m_ownClipboard = false;
-            sendClipboardEvent(EventType::CLIPBOARD_GRABBED, kClipboardClipboard);
-            sendClipboardEvent(EventType::CLIPBOARD_GRABBED, kClipboardSelection);
-        }
+        LOG_DEBUG("clipboard changed: another application owns it");
+        m_ownClipboard = false;
+        sendClipboardEvent(EventType::CLIPBOARD_GRABBED, kClipboardClipboard);
+        sendClipboardEvent(EventType::CLIPBOARD_GRABBED, kClipboardSelection);
     }
     else if (!m_ownClipboard) {
         LOG_DEBUG("clipboard changed: got ownership");

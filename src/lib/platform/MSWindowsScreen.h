@@ -295,6 +295,8 @@ private:
     HWND m_window;
     HWND m_nextClipboardWindow;
     bool m_ownClipboard;
+    // GetClipboardSequenceNumber() when we last handled a clipboard change
+    DWORD m_clipboardSequence = 0;
 
     // one desk per desktop and a cond var to communicate with it
     MSWindowsDesks* m_desks;
