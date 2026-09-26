@@ -60,6 +60,7 @@ These environment variables are read by the Inputgate client and server:
 | `INPUTGATE_MAX_FILE_MB` | `90` | Largest total size of copied files that will be sent. |
 | `INPUTGATE_RECEIVE_DIR` | `Downloads/Inputgate` | Folder that received files are saved in. |
 | `INPUTGATE_NO_WAYLAND_CLIPBOARD` | unset | Set to disable Wayland clipboard sharing. |
+| `INPUTGATE_NO_LOG_FILE` | unset | Set to stop writing the log file (`%ProgramData%\Inputgate\` on Windows, `~/.local/state/inputgate/` on Linux). |
 | `INPUTGATE_DATA_CONTROL` | unset | Set to `wlr` to use `wlr-data-control` even if `ext-data-control-v1` is available. |
 
 The server also has a clipboard size limit (100 MB by default) in

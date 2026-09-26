@@ -31,11 +31,13 @@
 #include "ipc/Ipc.h"
 #include "base/EventQueue.h"
 #include "common/DataDirectories.h"
+#include "io/filesystem.h"
 
 #if SYSAPI_WIN32
 #include "base/IEventQueue.h"
 #endif
 
+#include <cstdlib>
 #include <iostream>
 #include <stdio.h>
 
@@ -134,13 +136,60 @@ App::daemonMainLoop(int, const char**)
     return mainLoop();
 }
 
+namespace {
+/*  Inputgate always keeps a log file unless one was given with --log, so
+    problems can be diagnosed after the fact:
+      Windows: %ProgramData%\Inputgate\<program>.log
+      Linux:   $XDG_STATE_HOME/inputgate/<program>.log (~/.local/state/...)
+    INPUTGATE_NO_LOG_FILE turns this off. The file is rotated at 1 MB. */
+std::string default_log_file(const std::string& exename)
+{
+    if (std::getenv("INPUTGATE_NO_LOG_FILE")) {
+        return {};
+    }
+    std::string name = fs::u8path(exename).stem().u8string();
+    if (name.empty()) {
+        name = "inputgate";
+    }
+    fs::path dir;
+#if SYSAPI_WIN32
+    if (const char* data = std::getenv("ProgramData")) {
+        dir = fs::u8path(data) / "Inputgate";
+    }
+#else
+    if (const char* state = std::getenv("XDG_STATE_HOME"); state && *state) {
+        dir = fs::u8path(state) / "inputgate";
+    } else if (const char* home = std::getenv("HOME")) {
+        dir = fs::u8path(home) / ".local" / "state" / "inputgate";
+    }
+#endif
+    if (dir.empty()) {
+        return {};
+    }
+    std::error_code ec;
+    fs::create_directories(dir, ec);
+    if (ec) {
+        return {};
+    }
+    return (dir / (name + ".log")).u8string();
+}
+} // namespace
+
 void
 App::setupFileLogging()
 {
-    if (argsBase().m_logFile != nullptr) {
-        m_fileLog = new FileLogOutputter(argsBase().m_logFile);
+    static std::string default_file;
+    const char* file = argsBase().m_logFile;
+    if (file == nullptr) {
+        default_file = default_log_file(argsBase().m_exename);
+        if (!default_file.empty()) {
+            file = default_file.c_str();
+        }
+    }
+    if (file != nullptr) {
+        m_fileLog = new FileLogOutputter(file);
         CLOG->insert(m_fileLog);
-        LOG_DEBUG1("logging to file (%s) enabled", argsBase().m_logFile);
+        LOG_DEBUG1("logging to file (%s) enabled", file);
     }
 }
 
