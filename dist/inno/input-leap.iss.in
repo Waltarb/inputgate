@@ -1,8 +1,8 @@
-#define MyAppName "InputLeap"
+#define MyAppName "Inputgate"
 #define MyAppVersion "@INPUTLEAP_VERSION_MAJOR@.@INPUTLEAP_VERSION_MINOR@.@INPUTLEAP_VERSION_PATCH@"
 #define MyAppTextVersion "@INPUTLEAP_VERSION@"
-#define MyAppPublisher "InputLeap contributors"
-#define MyAppURL "https://github.com/input-leap/input-leap/wiki"
+#define MyAppPublisher "Inputgate and InputLeap contributors"
+#define MyAppURL "https://github.com/Waltarb/inputgate"
 #define MyAppCopyright "Copyright (C) InputLeap contributors"
 #define MyAppExeName "input-leap.exe"
 #define MyAppServiceName "InputLeap"
@@ -23,7 +23,7 @@ DefaultDirName={pf}\{#MyAppName}
 DisableProgramGroupPage=yes
 LicenseFile=@CMAKE_CURRENT_SOURCE_DIR@/res/License.rtf
 OutputDir=@CMAKE_INSTALL_PREFIX@/../installer-inno/bin
-OutputBaseFilename=InputLeapSetup-{#MyAppTextVersion}
+OutputBaseFilename=InputgateSetup-{#MyAppTextVersion}
 SetupIconFile=@CMAKE_CURRENT_SOURCE_DIR@/res/input-leap.ico
 VersionInfoProductTextVersion={#MyAppTextVersion}
 VersionInfoProductVersion={#MyAppVersion}

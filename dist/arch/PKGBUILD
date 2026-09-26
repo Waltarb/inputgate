@@ -1,0 +1,49 @@
+# Builds Inputgate from the checkout this file lives in.
+#
+#   cd dist/arch && makepkg -si
+#
+# Replaces the input-leap package, since both install the same binaries.
+
+pkgname=inputgate
+pkgver=3.0.3
+pkgrel=1
+pkgdesc="Share one keyboard, mouse, clipboard and files between computers (Input Leap fork with Wayland clipboard support)"
+arch=('x86_64' 'aarch64')
+url="https://github.com/Waltarb/inputgate"
+license=('GPL-2.0-only')
+depends=('qt6-base' 'libei' 'libportal' 'libxkbcommon' 'wayland' 'openssl' 'avahi'
+         'libx11' 'libxext' 'libxtst' 'libxinerama' 'libxrandr' 'libxi' 'libice' 'libsm'
+         'glib2' 'hicolor-icon-theme')
+makedepends=('cmake' 'ninja' 'qt6-tools' 'git')
+provides=('input-leap')
+conflicts=('input-leap' 'input-leap-git')
+
+_repo="$(cd "$startdir/../.." && pwd)"
+
+pkgver() {
+    cd "$_repo"
+    printf "3.0.3.r%s.g%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+}
+
+prepare() {
+    cd "$_repo"
+    git submodule update --init --recursive
+}
+
+build() {
+    cmake -S "$_repo" -B build -G Ninja \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+        -DQT_DEFAULT_MAJOR_VERSION=6 \
+        -DINPUTLEAP_BUILD_LIBEI=ON \
+        -DINPUTLEAP_BUILD_TESTS=ON
+    cmake --build build
+}
+
+check() {
+    build/bin/unittests
+}
+
+package() {
+    DESTDIR="$pkgdir" cmake --install build
+}
