@@ -57,6 +57,9 @@ public:
     \c kHTML is a text format encoded in UTF-8 and containing a valid
     HTML fragment (but not necessarily a complete HTML document).
     Newlines are LF.
+
+    \c kFileList contains the copied files and folders themselves,
+    packed with FileBundle::pack().
     */
     enum EFormat {
         kText,            //!< Text format, UTF-8, newline is LF
@@ -66,6 +69,7 @@ public:
         kJpeg,            //!< JPEG format
         kTiff,            //!< TIFF format
         kWebp,            //!< WEBP format
+        kFileList,        //!< Copied files and folders, see FileBundle
         kNumFormats        //!< The number of clipboard formats
     };
 

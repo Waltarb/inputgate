@@ -36,5 +36,5 @@ endif()
 add_library(synlib STATIC ${sources})
 
 if (UNIX)
-    target_link_libraries(synlib arch client ipc net base platform mt server)
+    target_link_libraries(synlib arch client ipc net base platform mt server io)
 endif()
