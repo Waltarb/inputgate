@@ -79,8 +79,14 @@ jobs:
       - name: Run unit tests
         run: |
           $tests = Get-ChildItem -Recurse build -Filter unittests.exe | Select-Object -First 1
-          & $tests.FullName
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $output = & $tests.FullName 2>&1 | Out-String
+          $code = $LASTEXITCODE
+          Write-Output $output
+          # Surface failures as annotations so they show on the run page
+          $output -split "`n" | Select-String -Pattern "\[  FAILED  \]|Failure|error" | ForEach-Object {
+            Write-Output "::error::$($_.Line.Trim())"
+          }
+          if ($code -ne 0) { exit $code }
 
       - name: Build installer
         run: |
