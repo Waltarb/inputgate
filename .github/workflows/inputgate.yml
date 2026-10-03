@@ -20,7 +20,7 @@ jobs:
             libei libportal libxkbcommon wayland openssl avahi libx11 libxext libxtst \
             libxinerama libxrandr libxi libice libsm glib2 hicolor-icon-theme
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: recursive
           fetch-depth: 0
@@ -32,7 +32,7 @@ jobs:
           git config --system --add safe.directory '*'
           su builder -c "cd '$GITHUB_WORKSPACE/dist/arch' && makepkg -f --nodeps"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: inputgate-arch-linux
           path: dist/arch/inputgate-3*.pkg.tar.zst
@@ -43,7 +43,7 @@ jobs:
     runs-on: windows-2022
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           path: inputgate
           submodules: recursive
@@ -94,7 +94,7 @@ jobs:
         run: |
           & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" /Qp .\build\installer-inno\input-leap.iss
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: inputgate-windows-installer
           path: .\build\installer-inno\bin
